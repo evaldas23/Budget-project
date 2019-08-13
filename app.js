@@ -1,4 +1,4 @@
-//C03-S06-L18-v2 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//C03-S06-L18-v2 paleidus budgetController.testing() consoleje neissitrina indexas !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 // BUDGET CONTROLLER
 
@@ -61,6 +61,24 @@ var budgetController = (function () {
       return newItem;
     },
 
+    deleteItem: function (type, id) {
+      var ids, index;
+      // id = 6;
+      //data.allItems[type][id]
+      // ids = [1, 2, 4, 6, 8];
+      // index = 3
+
+      ids = data.allItems[type].map(function (current) {
+        return current.id;
+      });
+      index = ids.indexOf(id);
+
+      if (index !== -1) {
+        data.allItems[type].splice(index, 1);
+      }
+
+    },
+
     calculateBudget: function () {
       // 1. Calculate total income and expences
       calculateTotal('exp');
@@ -117,7 +135,7 @@ var UIController = (function () {
       return {
         type: document.querySelector(DOMstrings.inputType).value, //Will be either inc or exp
         description: document.querySelector(DOMstrings.inputDescription).value,
-        value: parseFloat(document.querySelector(DOMstrings.inputValue).value) //parseFloat - konvertuoja strigus i skaicius
+        value: parseFloat(document.querySelector(DOMstrings.inputValue).value) //parseFloat - converting string to number
       };
     },
 
@@ -140,6 +158,13 @@ var UIController = (function () {
 
       // Insert the HTML into the DOM
       document.querySelector(element).insertAdjacentHTML('beforeend', newHtml);
+
+    },
+
+    deleteListItem: function (selectorID) {
+
+      var el = document.getElementById(selectorID)
+      el.parentNode.removeChild(el)
 
     },
 
@@ -226,22 +251,23 @@ var controller = (function (budgetCtrl, UICtrl) {
   };
 
   var ctrlDeleteIthem = function (event) {
-    var itemID, splitID, target, ID;
-    itemId = event.target.parentNode.parentNode.parentNode.parentNode.id;
+    var itemID, splitID, type, ID;
+    itemID = event.target.parentNode.parentNode.parentNode.parentNode.id;
 
     if (itemID) {
 
       // inc-1
       splitID = itemID.split('-');
       type = splitID[0];
-      ID = splitID[1];
+      ID = parseInt(splitID[1]);
 
       //1. Delete item from the data strucyture
+      budgetCtrl.deleteItem(type, ID);
+      //2. Delete item from the UI
+      UICtrl.deleteListItem(itemID);
 
-      //1. Delete item from the UI
-
-      //2. Update and show new budget
-
+      //3. Update and show new budget
+      updateBudget();
     }
   };
 
