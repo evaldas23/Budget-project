@@ -1,14 +1,28 @@
-//C03-S06-L18-v2 paleidus budgetController.testing() consoleje neissitrina indexas !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//C03-S06-L...-v2  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 // BUDGET CONTROLLER
 
 var budgetController = (function () {
 
-  var Expence = function (id, description, value) {
+  var Expense = function (id, description, value) {
     this.id = id;
     this.description = description;
     this.value = value;
+    this.percentage = -1;
   };
+
+  Expense.prototype.calcPercentage = function (totalIncome) {
+
+    if (totalIncome > 0) {
+      this.percentage = Math.round((this.value / totalIncome) * 100);
+    } else {
+      this.percentage = -1;
+    }
+  };
+
+  Expense.prototype.getPercentage = function () {
+    return this.percentage;
+  }
 
   var Income = function (id, description, value) {
     this.id = id;
@@ -49,7 +63,7 @@ var budgetController = (function () {
 
       //Create new item based on 'inc' or 'exp' type
       if (type === 'exp') {
-        newItem = new Expence(ID, des, val);
+        newItem = new Expense(ID, des, val);
       } else if (type === 'inc') {
         newItem = new Income(ID, des, val);
       }
@@ -93,8 +107,30 @@ var budgetController = (function () {
       } else {
         data.percentage = -1;
       }
+    },
 
+    calculatePercentages: function () {
 
+      /*
+      a = 20;
+      b = 10;
+      c = 40;
+      income = 100;
+      a = 20/100 = 20%;
+      b = 10/100 = 10%;
+      c = 40/100 = 40%'
+       */
+
+      data.allItems.exp.forEach(function(cur) {
+        cur.calcPercentage(data.totals.inc);
+      });
+    },
+
+    getPercentages: function () {
+      var allPerc = data.allItems.exp.map(function(cur) {
+        return cur.getPercentage();
+      });
+      return allPerc;
     },
 
     getBudget: function () {
@@ -127,7 +163,8 @@ var UIController = (function () {
     incomeLabel: '.budget__income--value',
     expencesLabel: '.budget__expenses--value',
     percentageLabel: '.budget__expenses--percentage',
-    container: '.container'
+    container: '.container',
+    expencesPercLabel: '.item__percentage'
   };
 
   return {
@@ -195,6 +232,27 @@ var UIController = (function () {
       }
     },
 
+    displayPercentages: function (percentages) {
+      var fields = document.querySelectorAll(DOMstrings.expencesPercLabel);
+
+      var nodeListForEach = function (list, callback) {
+        for (var i = 0; i < list.length; i++) {
+          callback(list[i], i);
+        }
+      };
+
+      nodeListForEach(fields, function (current, index) {
+
+        if (percentages[index] > 0) {
+          current.textContent = percentages[index] + '%';
+        } else {
+          current.textContent = '---';
+        }
+
+
+      });
+    },
+
     getDOMstrings: function () {
       return DOMstrings;
     }
@@ -227,6 +285,17 @@ var controller = (function (budgetCtrl, UICtrl) {
     var budget = budgetCtrl.getBudget();
     // 3. Display the budget on the UI
     UICtrl.displayBudget(budget);
+  };
+
+  var updatePercentages = function () {
+    // 1. Calculate percentages
+    budgetCtrl.calculatePercentages();
+
+    // 2. Read percentages from the budget controller
+    var percentages = budgetCtrl.getPercentages();
+
+    // 3. Update UI with the new percentages
+    UICtrl.displayPercentages(percentages);
   }
 
   var ctrlAddItem = function () {
@@ -247,6 +316,9 @@ var controller = (function (budgetCtrl, UICtrl) {
 
       // 5.Calculate and update budget
       updateBudget();
+
+      // 6. Calculate and update the percentages
+      updatePercentages();
     }
   };
 
@@ -265,9 +337,10 @@ var controller = (function (budgetCtrl, UICtrl) {
       budgetCtrl.deleteItem(type, ID);
       //2. Delete item from the UI
       UICtrl.deleteListItem(itemID);
-
       //3. Update and show new budget
       updateBudget();
+      //4. Calculate and update the percentages
+      updatePercentages();
     }
   };
 
